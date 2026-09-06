@@ -25,9 +25,12 @@ import {
 const CAMPAIGN_SLUG = "conf_2026_08_30_sms";
 
 // Mêmes règles que côté e-mail : les onglets se déduisent de cet objet.
+// Le T-2h a ete retire le 06/09/2026 : deux heures avant, le destinataire range
+// le lien et l'oublie. Le seq 4 n'est pas reattribue — les envois de fin aout
+// le portent encore dans `sms_campaign_sends`.
 const SMS_NAMES: Record<number, string> = {
-  4: "SMS 4 — T-2h",
-  6: "SMS 6 — Ouverture",
+  6: "SMS 6 — Ouverture (M-10)",
+  7: "SMS 7 — Rattrapage (M+15)",
 };
 
 const SMS_SEQS = Object.keys(SMS_NAMES).map(Number).sort((a, b) => a - b);

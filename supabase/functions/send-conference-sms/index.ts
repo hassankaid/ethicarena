@@ -1,7 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Envoi de la séquence SMS d'une conférence, via Twilio.
 //
-// Appel : POST { seq: 4 | 6, conference_date?: "YYYY-MM-DD", dry_run?: true }
+// Appel : POST { seq: 6 | 7, conference_date?: "YYYY-MM-DD", dry_run?: true }
+//   seq 6 = M-10  (juste avant l ouverture)
+//   seq 7 = M+15  (rattrapage, la conference est en cours)
 //
 // RIEN N'EST ÉCRIT EN DUR POUR UNE SEMAINE DONNÉE. La fonction résout la fiche
 // de la conférence dans `conferences`, et en tire l'heure annoncée dans les
@@ -102,18 +104,24 @@ interface Gabarit { name: string; body: string }
 
 function gabarits(f: Fiche): Record<number, Gabarit> {
   return {
-    4: {
-      name: "T-2h",
-      body: `Plus que 2h : conference en direct a ${f.heure}.
-
-Le lien du direct arrive dans le groupe :
-{{LINK}}`,
-    },
+    // SEQUENCE : un rappel juste avant, un rattrapage juste apres.
+    //
+    // Le T-2h a ete retire le 06/09/2026 : deux heures avant, le destinataire
+    // range le lien et l'oublie. Le seq 4 reste VACANT plutot que d'etre
+    // reattribue — les envois de fin aout portent ce numero dans
+    // `sms_campaign_sends`, et le reutiliser rendrait l'historique illisible.
     6: {
       name: "Ouverture",
       body: `On commence dans 10 min.
 
 Rejoins le groupe maintenant, le lien du direct y est :
+{{LINK}}`,
+    },
+    7: {
+      name: "Rattrapage +15min",
+      body: `C'est en cours depuis 15 min, on t'attend.
+
+Le lien du direct est dans le groupe :
 {{LINK}}`,
     },
   };
