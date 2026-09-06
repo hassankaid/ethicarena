@@ -70,15 +70,17 @@ function slugDe(date: string): string {
 interface Fiche {
   conference_date: string;
   whatsapp: string;
+  zoom: string;
   heure: string;
   campaign_slug: string;
   groupe_renseigne: boolean;
+  zoom_renseigne: boolean;
 }
 
 async function resoudreFiche(supabase: any, demande?: string): Promise<Fiche | null> {
   let q = supabase
     .from("conferences")
-    .select("conference_date, whatsapp_group_url, starts_at_local");
+    .select("conference_date, whatsapp_group_url, zoom_url, starts_at_local");
 
   if (demande) {
     q = q.eq("conference_date", demande);
@@ -97,8 +99,10 @@ async function resoudreFiche(supabase: any, demande?: string): Promise<Fiche | n
   return {
     conference_date: row.conference_date,
     whatsapp: row.whatsapp_group_url || WHATSAPP_DEFAUT,
+    zoom: row.zoom_url || ZOOM_DEFAUT,
     heure: formatHeure(row.starts_at_local),
     campaign_slug: slugDe(row.conference_date),
+    zoom_renseigne: Boolean(row.zoom_url),
     groupe_renseigne: !!row.whatsapp_group_url,
   };
 }
@@ -160,8 +164,11 @@ function ctaZoom(url: string, libelle: string): string {
 <p style="text-align:center;font-size:13px;line-height:1.5;color:#7a7a7a;margin:0 0 22px;">Le bouton ne s'affiche pas ?<br><a href="${url}" target="_blank" style="color:#A8813A;text-decoration:underline;">${visible}</a></p>`;
 }
 
-/** Le direct du 06/09/2026. A porter dans `conferences` quand la colonne existera. */
-const ZOOM_06_09 = "https://us06web.zoom.us/j/86026956116";
+/**
+ * Filet si la fiche n'a pas de `zoom_url`. Comme pour le groupe WhatsApp :
+ * mieux vaut un lien peut-etre perime qu'un e-mail sans bouton.
+ */
+const ZOOM_DEFAUT = "https://us06web.zoom.us/j/85455284733";
 
 const SIG = `<p style="margin-top:24px;">Sidali<br><span style="color:#7a7a7a;">Fondateur de l'écosystème AL BARAKA</span></p>`;
 
@@ -208,7 +215,7 @@ ${SIG}`,
 <li style="margin:8px 0;">Le plan EXACT en 5 étapes pour devenir business developer et atteindre l'indépendance</li>
 </ol>
 <p>Prépare un endroit calme, de quoi noter&hellip; et surtout ta concentration.</p>
-${ctaZoom(ZOOM_06_09, "&#128073; Je rejoins la conférence")}
+${ctaZoom(f.zoom, "&#128073; Je rejoins la conférence")}
 <p>On se retrouve tout à l'heure in shaa Allah,</p>
 ${SIG}`,
     },
@@ -220,7 +227,7 @@ ${SIG}`,
 <p>Nous venons tout juste de commencer la conférence en direct.</p>
 <p>Si tu veux enfin comprendre comment générer des revenus en ligne sans produit, sans audience, et de manière 100% halal&hellip;</p>
 <p>Et découvrir le métier méconnu qui permet à des frères et sœurs de gagner entre 2 000 et 6 000&euro;/mois en 90 jours&hellip;</p>
-${ctaZoom(ZOOM_06_09, "&#10145; Je rejoins maintenant")}
+${ctaZoom(f.zoom, "&#10145; Je rejoins maintenant")}
 ${SIG}`,
     },
     5: {
@@ -319,6 +326,8 @@ serve(async (req) => {
       campaign_slug: fiche.campaign_slug,
       groupe_whatsapp: fiche.whatsapp,
       groupe_renseigne_sur_la_fiche: fiche.groupe_renseigne,
+      lien_zoom: fiche.zoom,
+      zoom_renseigne_sur_la_fiche: fiche.zoom_renseigne,
       objet: render(tpl.subject, { FIRST_NAME: "Prénom" }),
       liste_totale: recipients.length,
       deja_envoyes: alreadySentSet.size,
