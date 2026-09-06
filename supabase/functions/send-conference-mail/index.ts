@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Envoi de la séquence e-mail d'une conférence, via Resend.
 //
-// Appel : POST { seq: 4 | 5, max?: 1..300, conference_date?: "YYYY-MM-DD",
+// Appel : POST { seq: 4 | 5 | 8 | 9, max?: 1..300, conference_date?: "YYYY-MM-DD",
 //                dry_run?: true }
 //
 // RIEN N'EST ÉCRIT EN DUR POUR UNE SEMAINE DONNÉE. La fonction résout la fiche
@@ -143,6 +143,26 @@ function cta(whatsapp: string): string {
 <p style="text-align:center;font-size:13px;line-height:1.5;color:#7a7a7a;margin:0 0 22px;">Le bouton ne s'affiche pas ?<br><a href="${whatsapp}" target="_blank" style="color:#A8813A;text-decoration:underline;">${visible}</a></p>`;
 }
 
+
+/**
+ * Bouton vers le direct Zoom.
+ *
+ * Distinct de `cta()`, qui mene au groupe WhatsApp. Les deux coexistent : le
+ * groupe reste le point de ralliement de la semaine, le lien Zoom ne vaut que
+ * le jour meme, pendant la conference.
+ */
+function ctaZoom(url: string, libelle: string): string {
+  const visible = url.replace(/^https?:\/\//, "");
+  return `<table role="presentation" border="0" cellspacing="0" cellpadding="0" align="center" style="margin:28px auto 10px;">
+<tr><td align="center" bgcolor="#C9A04E" style="background-color:#C9A04E;border:1px solid #C9A04E;border-radius:6px;">
+<a href="${url}" target="_blank" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:6px;">${libelle}</a>
+</td></tr></table>
+<p style="text-align:center;font-size:13px;line-height:1.5;color:#7a7a7a;margin:0 0 22px;">Le bouton ne s'affiche pas ?<br><a href="${url}" target="_blank" style="color:#A8813A;text-decoration:underline;">${visible}</a></p>`;
+}
+
+/** Le direct du 06/09/2026. A porter dans `conferences` quand la colonne existera. */
+const ZOOM_06_09 = "https://us06web.zoom.us/j/86026956116";
+
 const SIG = `<p style="margin-top:24px;">Sidali<br><span style="color:#7a7a7a;">Fondateur de l'écosystème AL BARAKA</span></p>`;
 
 interface Gabarit { name: string; subject: string; preheader: string; body: string }
@@ -167,6 +187,40 @@ function gabarits(f: Fiche): Record<number, Gabarit> {
 <p>Si tu n'as qu'une seule chose à faire maintenant, c'est celle-ci : <strong>rejoins le groupe WhatsApp</strong>. Le lien du direct y sera posté — je ne veux pas que tu rates ça pour une simple histoire de lien.</p>
 ${CTA}
 <p>Prépare tes questions. Rendez-vous à ${f.heure}, inshaAllah.</p>
+${SIG}`,
+    },
+    // ── Sequence du 06/09/2026, texte fourni par Hassan ────────────────
+    // Elle mene au DIRECT ZOOM, pas au groupe WhatsApp : c'est un envoi du jour
+    // meme, ou le lien de la salle vaut mieux qu'un detour par WhatsApp.
+    // Numeros 8 et 9 pour ne pas ecraser le sens des seq 4 et 5 dans
+    // `email_campaign_sends`, dont le contenu etait different.
+    8: {
+      name: "M-30 (Zoom)",
+      subject: "Plus que 30 minutes avant la conférence",
+      preheader: "Prépare un endroit calme, de quoi noter, et ta concentration.",
+      body: `<p>Salam aleykoum {{FIRST_NAME}},</p>
+<p>Dans 30 minutes, on se retrouve pour la conférence exclusive :</p>
+<p><strong>Découvre comment le métier de business developer peut te permettre de générer entre 2-6k / mois en 90 jours</strong></p>
+<p>Voici ce que tu vas découvrir :</p>
+<ol style="padding-left:20px;">
+<li style="margin:8px 0;">Comment comprendre le système pour te sortir du conditionnement (et atteindre ta liberté géographique et financière).</li>
+<li style="margin:8px 0;">Les VRAIS secrets des métiers du digital : comment vous faire payer pour vos compétences de manière 100% halal</li>
+<li style="margin:8px 0;">Le plan EXACT en 5 étapes pour devenir business developer et atteindre l'indépendance</li>
+</ol>
+<p>Prépare un endroit calme, de quoi noter&hellip; et surtout ta concentration.</p>
+${ctaZoom(ZOOM_06_09, "&#128073; Je rejoins la conférence")}
+<p>On se retrouve tout à l'heure in shaa Allah,</p>
+${SIG}`,
+    },
+    9: {
+      name: "Ouverture (Zoom)",
+      subject: "La conférence vient de commencer — rejoins-nous vite !",
+      preheader: "On est en direct. Le lien de la salle est dans ce message.",
+      body: `<p>Salam aleykoum {{FIRST_NAME}},</p>
+<p>Nous venons tout juste de commencer la conférence en direct.</p>
+<p>Si tu veux enfin comprendre comment générer des revenus en ligne sans produit, sans audience, et de manière 100% halal&hellip;</p>
+<p>Et découvrir le métier méconnu qui permet à des frères et sœurs de gagner entre 2 000 et 6 000&euro;/mois en 90 jours&hellip;</p>
+${ctaZoom(ZOOM_06_09, "&#10145; Je rejoins maintenant")}
 ${SIG}`,
     },
     5: {
